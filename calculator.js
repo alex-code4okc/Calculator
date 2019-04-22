@@ -10,9 +10,8 @@ var numbers = ['7','8','9','4','5','6','1','2','3','0','.'];
 var calculationStack = [];
 
 var firstDisplayValue = false;
-var secondDisplayValue = false;
 var firstOperatorPressed = false;
-var secondOperatorPressed = false;
+var equalOperator = false;
 
 calculatorElement = document.getElementById(calculatorID);
  
@@ -55,6 +54,7 @@ function numberClicked(e) {
         console.log('display should have been reset');
         // reset firstDisplayValue back to false to make use of old logic
         firstDisplayValue = false;
+        firstOperatorPressed = false; //number has accumulated and new operation can take place
     }// this branch is taken only at initialization or after firstDisplayValue is reset to false by an operator click
     else {
         if(displayValue.length>=9){
@@ -88,9 +88,8 @@ function operationClicked(e){
             displayElement.innerText='0';
             // reset all boolean values and calculationStack
             firstDisplayValue = false;
-            secondDisplayValue = false;
             firstOperatorPressed = false;
-            secondOperatorPressed = false;
+            equalOperator = false;
             calculationStack = [];
             break;
         case '+/-':
@@ -144,24 +143,115 @@ function operationClicked(e){
             
             break;
         case 'X':
+            // number to be operated on is final once an operator is clicked so add it to calculationStack
+            if(firstOperatorPressed == false){
+                calculationStack.push(displayElement.innerText);
+                calculationStack.push('X');
+
+                firstOperatorPressed = true;
+                firstDisplayValue = true;
+                // display must update after the first operator press to display second number
+                if(calculationStack.length>=3){
+                    var num1 = Number(calculationStack.shift());
+                    var oper = calculationStack.shift();
+                    var num2 = Number(calculationStack.shift());
+                    var calculatedNumber = calculation(num1,num2,oper);
+                    
+                    calculationStack.unshift(calculatedNumber);
+                    displayElement.innerText = calculatedNumber.toString();
+                }
+            }
+            else if(firstOperatorPressed == true ){
+                // waiting for a new number to accumulate
+                // firstOperatorPressed must be set to false in the numberClicked function
+            }
             break;
         case '-':
+            // number to be operated on is final once an operator is clicked so add it to calculationStack
+            if(firstOperatorPressed == false){
+                calculationStack.push(displayElement.innerText);
+                calculationStack.push('-');
+
+                firstOperatorPressed = true;
+                firstDisplayValue = true;
+                // display must update after the first operator press to display second number
+                if(calculationStack.length>=3){
+                    var num1 = Number(calculationStack.shift());
+                    var oper = calculationStack.shift();
+                    var num2 = Number(calculationStack.shift());
+                    var calculatedNumber = calculation(num1,num2,oper);
+                    
+                    calculationStack.unshift(calculatedNumber);
+                    displayElement.innerText = calculatedNumber.toString();
+                }
+            }
+            else if(firstOperatorPressed == true ){
+                // waiting for a new number to accumulate
+                // firstOperatorPressed must be set to false in the numberClicked function
+            }
             break;
         case '+':
+            // number to be operated on is final once an operator is clicked so add it to calculationStack
+            if(firstOperatorPressed == false){
+                calculationStack.push(displayElement.innerText);
+                calculationStack.push('+');
+
+                firstOperatorPressed = true;
+                firstDisplayValue = true;
+                // display must update after the first operator press to display second number
+                if(calculationStack.length>=3){
+                    var num1 = Number(calculationStack.shift());
+                    var oper = calculationStack.shift();
+                    var num2 = Number(calculationStack.shift());
+                    var calculatedNumber = calculation(num1,num2,oper);
+                    
+                    calculationStack.unshift(calculatedNumber);
+                    displayElement.innerText = calculatedNumber.toString();
+                }
+            }
+            else if(firstOperatorPressed == true ){
+                // waiting for a new number to accumulate
+                // firstOperatorPressed must be set to false in the numberClicked function
+            }
             break;
         case '=':
-            // save the second operand to the stack
-            calculationStack.push(displayElement.innerText);
+            // iOS calculator keeps repeating the last operation every time = is clicked
+            // ex: 200 / 2 = 100 = 50 = 25 = 12.5 etc there is memory on the last operator
+            // and if new display number is clicked, 200 / 2 = 100, replaced by 3 = returns 1.5
+            // the last operation is performed on the new display value
+            
+            if(!equalOperator){ // if equalOperator has not been pressed
+                if(!firstOperatorPressed && calculationStack.length==2) {
+                    // if firstOperatorPressed is false, once equal sign has 
+                    equalOperator = true;
+                    // save the second operand to the stack
+                    calculationStack.push(displayElement.innerText);
+                    // calculatinStack is now of length 3
+    
+                    //firstOperatorPressed = true; // this blocks all future operators
+    
+                    firstDisplayValue = true;
+                    
+                    if(calculationStack.length>=3){
+                        var num1 = Number(calculationStack.shift());
+                        var oper = calculationStack.shift();
+                        var num2 = Number(calculationStack.shift());
+                        var calculatedNumber = calculation(num1,num2,oper);
+                        
+                        // let this unshift happen in the other operators *,/,+,- not by =
+                        calculationStack.unshift(calculatedNumber);
+                        displayElement.innerText = calculatedNumber.toString();
+                    }
+                }
+                else{
+                    // waiting for a new number to accumulate
+                    // firstOperatorPressed must be set to false in the numberClicked function
+                }
+            }else{ // if it has continue operating on the last procedure, until *,/,+,- operator breaks the cycle
+                // ex: 200 / 2 = 100 = 50 = 25 (implicit unshift of display value, and oper,num2)
 
-            if(calculationStack.length>=3){
-                var num1 = Number(calculationStack.shift());
-                var oper = calculationStack.shift();
-                var num2 = Number(calculationStack.shift());
-                var calculatedNumber = calculation(num1,num2,oper);
-                
-                calculationStack.unshift(calculatedNumber);
-                displayElement.innerText = calculatedNumber.toString();
             }
+            
             break;
     }
 }
