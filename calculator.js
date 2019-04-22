@@ -1,5 +1,3 @@
-
-
 const calculatorID = 'calculator';
 const displayClass = 'display';
 const numberClass = 'number';
@@ -13,19 +11,16 @@ var calculationStack = [];
 
 var firstDisplayValue = false;
 var secondDisplayValue = false;
-
 var firstOperatorPressed = false;
 var secondOperatorPressed = false;
 
-var startNewOperation = true;
-
-
 calculatorElement = document.getElementById(calculatorID);
  
-//initialize display
+//create display element
 var displayElement = document.createElement('DIV');
 displayElement.setAttribute('class',displayClass);
 displayElement.setAttribute('id',displayClass);
+// initialize display to 0
 displayElement.innerText = '0';
 
 calculatorElement.appendChild(displayElement);
@@ -54,20 +49,20 @@ function numberClicked(e) {
     var displayValue = displayInstance.innerText;
     
     if(firstDisplayValue == true){
-         //reset display firt number has been captured. need to display second number
+         //reset display first number has been captured. need to display and accumulate second number
         displayElement.innerText = '';
         displayElement.innerText = e.target.innerText;
         console.log('display should have been reset');
         // reset firstDisplayValue back to false to make use of old logic
         firstDisplayValue = false;
-    }// this branch is taken only at initialization or after firstDisplayValue is reset to false by an operator
+    }// this branch is taken only at initialization or after firstDisplayValue is reset to false by an operator click
     else {
         if(displayValue.length>=9){
-            //display is full do not add number to display
-
+            // display is full do not add  any new number to display
+            // need to exclude . as a number
         }
         else if(displayElement.innerText[0]=='0' && displayElement.innerText.length==1 ){
-        //replace display with number
+        //replace 0 display with number
             if(e.target.innerText=='.'){
                 displayElement.innerText = displayElement.innerText + e.target.innerText;
             }
@@ -91,6 +86,12 @@ function operationClicked(e){
         case 'AC':
             //reset display
             displayElement.innerText='0';
+            // reset all boolean values and calculationStack
+            firstDisplayValue = false;
+            secondDisplayValue = false;
+            firstOperatorPressed = false;
+            secondOperatorPressed = false;
+            calculationStack = [];
             break;
         case '+/-':
             // toggle between negative and positive
@@ -98,9 +99,11 @@ function operationClicked(e){
                 //do nothing display is 0
             }
             else if(displayElement.innerText.includes('-') ){
+                // removes negative sign
                 displayElement.innerText = displayElement.innerText.slice(1,);
             }
             else{
+                // appends negative sign to string
                 displayElement.innerText = '-'+displayElement.innerText;
             }
             break;
@@ -117,35 +120,26 @@ function operationClicked(e){
             break;
         case '/':
             // number to be operated on is final once an operator is clicked so add it to calculationStack
-            if(firstOperatorPressed == false && firstDisplayValue == false){
+            if(firstOperatorPressed == false){
                 calculationStack.push(displayElement.innerText);
                 calculationStack.push('/');
+
                 firstOperatorPressed = true;
                 firstDisplayValue = true;
                 // display must update after the first operator press to display second number
-
+                if(calculationStack.length>=3){
+                    var num1 = Number(calculationStack.shift());
+                    var oper = calculationStack.shift();
+                    var num2 = Number(calculationStack.shift());
+                    var calculatedNumber = calculation(num1,num2,oper);
+                    
+                    calculationStack.unshift(calculatedNumber);
+                    displayElement.innerText = calculatedNumber.toString();
+                }
             }
-            else if(firstOperatorPressed == true && firstDisplayValue == false){
-
-                calculationStack.push(displayElement.innerText);
-                //second number captured
-                secondDisplayValue = true;
-               
-                // this is the second time operator has been pressed
-                secondOperatorPressed = true;
-                // reset the first operator
-                firstOperatorPressed = false;
-                //calculation should only proceed if second number has been given
-                var num1 = Number(calculationStack.shift());
-                var oper = calculationStack.shift();
-                var num2 = Number(calculationStack.shift());
-                var calculatedNumber = calculation(num1,num2,oper);
-
-                displayElement.innerText = calculatedNumber.toString();
-
-                calculationStack.push(calculatedNumber);
-                calculationStack.push('/');
-                firstDisplayValue = true;
+            else if(firstOperatorPressed == true ){
+                // waiting for a new number to accumulate
+                // firstOperatorPressed must be set to false in the numberClicked function
             }
             
             break;
@@ -156,6 +150,18 @@ function operationClicked(e){
         case '+':
             break;
         case '=':
+            // save the second operand to the stack
+            calculationStack.push(displayElement.innerText);
+
+            if(calculationStack.length>=3){
+                var num1 = Number(calculationStack.shift());
+                var oper = calculationStack.shift();
+                var num2 = Number(calculationStack.shift());
+                var calculatedNumber = calculation(num1,num2,oper);
+                
+                calculationStack.unshift(calculatedNumber);
+                displayElement.innerText = calculatedNumber.toString();
+            }
             break;
     }
 }
